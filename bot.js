@@ -75,7 +75,4 @@ client.on('message', message => {
 
 	
 		 command.execute(message, args);
-	
-
-	
 });
