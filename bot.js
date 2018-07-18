@@ -1,24 +1,55 @@
-const Discord = require("discord.js");
-const client = new Discord.Client();
-const fs = require("fs");
+t fs = require('fs');
+const Discord = require('discord.js');
+const { prefix, token } = require('./config.json');
 
-const config = require("./config.json");
+const client = new Discord.Client();
+client.commands = new Discord.Collection();
+
+const cooldowns = new Discord.Collection();
+
+const commandFiles = require('./commands').filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.name, command);
+}
 
 client.on('ready', () => {
-    console.log('Bot is running!');
+    console.log('Bot is online!');
 });
 
-client.on("message", message => {
-  if (message.author.bot) return;
-  if(message.content.indexOf(config.prefix) !== 0) return;
-    
-    commandFile = require(`./commands/${command}.js`);
+client.on('message', message => {
 
-  // This is the best way to define args. Trust me.
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
-  const command = args.shift().toLowerCase();
-    
-    if (!cooldowns.has(command.name)) {
+	if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+	const args = message.content.slice(prefix.length).split(/ +/);
+	const commandName = args.shift().toLowerCase();
+	
+	
+
+
+     //commands
+  if (!client.commands.has(commandName)) return;
+
+ const command = client.commands.get(commandName);
+ 
+ if (command.serverOnly && message.channel.type !== 'text') {
+    return message.reply('I can\'t execute that command inside DMs!');
+}
+  if (command.args && !args.length) {
+     let reply = `${command.argsMessage}`;
+
+        if (command.usage) {
+           reply += `\nThe proper usage would be: \`${prefix}${command.name} ${command.usage}\``;
+        }
+		
+        return message.channel.send(reply);
+    }
+
+	
+
+
+	if (!cooldowns.has(command.name)) {
 		cooldowns.set(command.name, new Discord.Collection());
 	}
 
@@ -42,12 +73,12 @@ client.on("message", message => {
 		setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
 	}
 
-  // The list of if/else is replaced with those simple 2 lines:
-  try {
-    command.execute(message, args);
-  } catch (err) {
-    console.error(err);
-  }
-});
+	try {
+		 command.execute(message, args);
+	}
 
-client.login(config.token);
+	catch (error) {
+		console.error(error);
+		message.reply('there was an error trying to execute that command!');
+		}	
+});
