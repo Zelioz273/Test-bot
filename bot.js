@@ -1,78 +1,35 @@
-t fs = require('fs');
-const Discord = require('discord.js');
-const { prefix, token } = require('./config.json');
-
+const Discord = require("discord.js");
 const client = new Discord.Client();
-client.commands = new Discord.Collection();
+const fs = require("fs");
 
-const cooldowns = new Discord.Collection();
+const config = require("./config.json");
 
-const commandFiles = require('./commands').filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.name, command);
-}
-
-client.on('ready', () => {
-    console.log('Bot is online!');
+// This loop reads the /events/ folder and attaches each event file to the appropriate event.
+fs.readdir("./events/", (err, files) => {
+  if (err) return console.error(err);
+  files.forEach(file => {
+    let eventFunction = require(`./events/${file}`);
+    let eventName = file.split(".")[0];
+    // super-secret recipe to call events with all their proper arguments *after* the `client` var.
+    client.on(eventName, (...args) => eventFunction.run(client, ...args));
+  });
 });
 
-client.on('message', message => {
+client.on("message", message => {
+  if (message.author.bot) return;
+  if(message.content.indexOf(config.prefix) !== 0) return;
 
-	if (!message.content.startsWith(prefix) || message.author.bot) return;
+  // This is the best way to define args. Trust me.
+  const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
+  const command = args.shift().toLowerCase();
 
-	const args = message.content.slice(prefix.length).split(/ +/);
-	const commandName = args.shift().toLowerCase();
-	
-	
-
-
-     //commands
-  if (!client.commands.has(commandName)) return;
-
- const command = client.commands.get(commandName);
- 
- if (command.serverOnly && message.channel.type !== 'text') {
-    return message.reply('I can\'t execute that command inside DMs!');
-}
-  if (command.args && !args.length) {
-     let reply = `${command.argsMessage}`;
-
-        if (command.usage) {
-           reply += `\nThe proper usage would be: \`${prefix}${command.name} ${command.usage}\``;
-        }
-		
-        return message.channel.send(reply);
-    }
-
-	
-
-
-	if (!cooldowns.has(command.name)) {
-		cooldowns.set(command.name, new Discord.Collection());
-	}
-
-	const now = Date.now();
-	const timestamps = cooldowns.get(command.name);
-	const cooldownAmount = (command.cooldown || 3) * 1000;
-
-	if (!timestamps.has(message.author.id)) {
-		timestamps.set(message.author.id, now);
-		setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
-	}
-
-	else {
-		const expirationTime = timestamps.get(message.author.id) + cooldownAmount;
-
-		if (now < expirationTime) {
-			const timeLeft = (expirationTime - now) / 1000
-			return message.reply(`please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`);
-		}
-		timestamps.set(message.author.id, now);
-		setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
-	}
-
-	
-		 command.execute(message, args);
+  // The list of if/else is replaced with those simple 2 lines:
+  try {
+    let commandFile = require(`./commands/${command}.js`);
+    commandFile.run(client, message, args);
+  } catch (err) {
+    console.error(err);
+  }
 });
+
+client.login(config.token);
