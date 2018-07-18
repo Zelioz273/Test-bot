@@ -1,4 +1,3 @@
-exports.run = (client, message, args) => {
-    execute (message)
+exports.run = (message) => {
     message.channel.send("pong?").catch(console.error);
 }
