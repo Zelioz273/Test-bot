@@ -4,6 +4,10 @@ const fs = require("fs");
 
 const config = require("./config.json");
 
+client.on('ready', () => {
+    console.log('Bot is running!');
+});
+
 client.on("message", message => {
   if (message.author.bot) return;
   if(message.content.indexOf(config.prefix) !== 0) return;
