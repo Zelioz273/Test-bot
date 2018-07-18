@@ -25,7 +25,7 @@ client.on("message", message => {
 
   // The list of if/else is replaced with those simple 2 lines:
   try {
-    let commandFile = require(`./commands/${command}.js`);
+    let commandFile = require(`./Commands/${command}.js`);
     commandFile.run(client, message, args);
   } catch (err) {
     console.error(err);
