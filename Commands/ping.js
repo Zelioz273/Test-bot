@@ -1,6 +1,6 @@
 module.exports = {
     
-    execute(client, message) {
+    execute(message) {
     message.channel.send("pong?");
         
     }
