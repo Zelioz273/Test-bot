@@ -1,8 +1,3 @@
-module.exports = {
-   execute(message) {
-   message.channel.send('Ping.');
-  }
-
-	},
-
-};
+exports.run = (message, args) => {
+    message.channel.send("pong!").catch(console.error);
+}
