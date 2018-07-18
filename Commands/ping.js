@@ -1,14 +1,3 @@
-module.exports = {
-	
-    name: 'ping',
-	
-    description: 'Ping!',
-	
-	cooldown: 3,
-	
-    execute(message) {
-		
-        message.channel.send('Pong.');
-		
-    },
-};
+exports.run = (client, message, args) => {
+    message.channel.send("pong!").catch(console.error);
+}
